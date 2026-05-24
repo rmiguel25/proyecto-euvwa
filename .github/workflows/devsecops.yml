@@ -14,75 +14,64 @@ on:
   - master
 
 jobs:
+ security-pipeline:
 
-  security-pipeline:
-
-    # GitHub levanta una máquina Ubuntu temporal
-    # donde se ejecutan todos los análisis.
+    # Máquina Ubuntu temporal usada por GitHub Actions.
     runs-on: ubuntu-latest
 
     steps:
 
-    # Descarga el contenido del repositorio
-    # para que el pipeline pueda trabajar con él.
-    - name: Clonar repositorio
-      uses: actions/checkout@v4
+      # Descarga el repositorio.
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
 
-    # Instalación de Node.js para ejecutar
-    # la aplicación y las herramientas.
-    - name: Instalar Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 18
+      # Instalación de Node.js.
+      - name: Instalar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
 
-    # Instalación de dependencias del proyecto.
-    - name: Instalar dependencias
-      run: npm install
+      # Instalación de dependencias del proyecto.
+      - name: Instalar dependencias
+        run: npm install
 
-    # ESLint con reglas de seguridad básicas.
-    # El "|| true" evita que el pipeline se pare
-    # aunque encuentre errores o warnings.
-    - name: Ejecutar ESLint Security
-      run: |
-        npm install eslint eslint-plugin-security --save-dev
-        npx eslint . || true
+      # Análisis básico con ESLint Security.
+      - name: Ejecutar ESLint Security
+        run: |
+          npm install eslint eslint-plugin-security --save-dev
+          npx eslint . || true
 
-    # Semgrep permite detectar patrones inseguros
-    # directamente en el código fuente.
-    - name: Ejecutar Semgrep
-      uses: returntocorp/semgrep-action@v1
-      with:
-        config: "p/security-audit"
+      # Escaneo SAST con Semgrep.
+      - name: Ejecutar Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: "p/security-audit"
 
-    # Construcción de la imagen Docker
-    # que luego será analizada.
-    - name: Construir imagen Docker
-      run: docker build -t euvwa .
+      # Construcción de imagen Docker.
+      - name: Construir imagen Docker
+        run: docker build -t euvwa .
 
-    # Escaneo del sistema de archivos del proyecto
-    # para buscar vulnerabilidades conocidas.
-    - name: Escaneo Trivy Filesystem
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: 'fs'
-        scan-ref: '.'
+      # Escaneo de vulnerabilidades del proyecto.
+      - name: Escaneo Trivy Filesystem
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
 
-    # Escaneo de vulnerabilidades de nuestra imagen de docker.
-    - name: Escaneo Trivy Docker Image
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: 'euvwa'
+      # Escaneo de vulnerabilidades de la imagen Docker.
+      - name: Escaneo Trivy Docker Image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'euvwa'
 
-    # Levanto e parte temporalmente el contenedor
-    # para poder hacer análisis dinámico.
-    - name: Ejecutar aplicación
-      run: |
-        docker run -d -p 3000:3000 --name euvwa-container euvwa
-        sleep 20
+      # Arranque temporal de la aplicación.
+      - name: Ejecutar aplicación
+        run: |
+          docker run -d -p 3000:3000 --name euvwa-container euvwa
+          sleep 20
 
-    # OWASP ZAP realiza pruebas DAST básicas
-    # sobre la aplicación ya ejecutándose.
-    - name: OWASP ZAP Baseline Scan
-      uses: zaproxy/action-baseline@v0.12.0
-      with:
-        target: 'http://localhost:3000'
+      # Escaneo DAST con OWASP ZAP.
+      - name: OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:3000'
