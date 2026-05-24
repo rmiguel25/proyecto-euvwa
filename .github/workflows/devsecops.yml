@@ -7,7 +7,7 @@ name: DevSecOps Pipeline
 
 # Se ejecuta automáticamente cuando hago push
 # a las ramas principales del proyecto.
-on:
+"on":
   push:
   branches:
   - main
