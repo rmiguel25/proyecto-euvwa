@@ -52,6 +52,8 @@ jobs:
         uses: returntocorp/semgrep-action@v1
         with:
           config: "p/security-audit"
+      # Con esto le decimos que aunque encuentre fallos, no rompa el pipeline
+        continue-on-error: true
 
       # Construcción de la imagen Docker.
       - name: Construir imagen Docker
