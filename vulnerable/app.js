@@ -245,9 +245,9 @@ app.get('/panel', (req, res) => {
     }
 });
 // -------- SERVIDOR --------
-app.listen(3000, () => {
-    console.log("Servidor en http://localhost:3000");
-});
+//app.listen(3000, () => {
+//    console.log("Servidor en http://localhost:3000");
+//});
 // --- 7. Vulnerabilidad: Security Misconfiguration ---
 
 app.get('/config-rota', (req, res) => {
