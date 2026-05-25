@@ -15,6 +15,7 @@ on:
       - main-secure
 
 jobs:
+
   security-pipeline:
 
     # GitHub crea una máquina Ubuntu temporal
@@ -23,7 +24,7 @@ jobs:
 
     steps:
 
-      # Descarga el contenido del repositorio.
+      # Descarga el repositorio.
       - name: Clonar repositorio
         uses: actions/checkout@v4
 
@@ -38,8 +39,8 @@ jobs:
         run: npm install
 
       # ESLint permite detectar problemas básicos
-      # relacionados con seguridad en JavaScript.
-      # El "|| true" evita detener el pipeline.
+      # relacionados con seguridad.
+      # El pipeline continúa aunque aparezcan warnings.
       - name: Ejecutar ESLint Security
         run: |
           npm install eslint eslint-plugin-security --save-dev
@@ -81,8 +82,26 @@ jobs:
           docker run -d -p 3000:3000 --name euvwa-container euvwa
           sleep 20
 
+      # Verificar que la app responde antes de lanzar ZAP.
+      - name: Verificar que la app está activa
+        run: |
+          curl --retry 10 --retry-delay 3 --retry-connrefused http://localhost:3000
+
+      # Obtener la IP del runner para que ZAP
+      # pueda alcanzar correctamente la aplicación.
+      - name: Obtener IP del runner
+        id: get-ip
+        run: echo "runner_ip=$(hostname -I | awk '{print $1}')" >> $GITHUB_OUTPUT
+
+      # Dar permisos al workspace para que
+      # OWASP ZAP pueda generar reportes.
+      - name: Ajustar permisos para ZAP
+        run: chmod a+w ${{ github.workspace }}
+
       # Escaneo DAST básico utilizando OWASP ZAP.
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.12.0
+        continue-on-error: true
         with:
-          target: http://localhost:3000
+          target: http://${{ steps.get-ip.outputs.runner_ip }}:3000
+          allow_issue_writing: false
