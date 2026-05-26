@@ -2,7 +2,7 @@
 #Actividad 2 – Pipeline DevSecOps sobre euVWA
 #Alumno: Raúl Miguel FernandesPipeline DevSecOps para euVWA
 # La idea es automatizar controles básicos de seguridad cada vez que se sube código al repositorio.
-
+# Pipeline actualizado con logs Docker
 name: DevSecOps Pipeline
 
 # Se ejecuta automáticamente cuando hago push
