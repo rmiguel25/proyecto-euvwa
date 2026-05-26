@@ -30,6 +30,7 @@ jobs:
       - name: Clonar repositorio
         uses: actions/checkout@v4
 
+
       # Instalación del entorno Node.js.
       - name: Instalar Node.js
         uses: actions/setup-node@v4
@@ -69,6 +70,15 @@ jobs:
         with:
           scan-type: fs
           scan-ref: .
+      
+          # Generación automática del SBOM
+      # para inventario de dependencias.
+      - name: Generar SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: sbom.json
 
       # Escaneo de vulnerabilidades
       # dentro de la imagen Docker.
