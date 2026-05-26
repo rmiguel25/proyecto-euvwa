@@ -1,12 +1,14 @@
 # Desarrollo Seguro de Aplicaciones
-#Actividad 2 – Pipeline DevSecOps sobre euVWA
-#Alumno: Raúl Miguel FernandesPipeline DevSecOps para euVWA
-# La idea es automatizar controles básicos de seguridad cada vez que se sube código al repositorio.
-# Pipeline actualizado con logs Docker
+# Actividad 2 – Pipeline DevSecOps sobre euVWA
+# Alumno: Raúl Miguel Fernández
+# La idea de este workflow es automatizar
+# controles básicos de seguridad cada vez
+# que se sube código al repositorio.
+
 name: DevSecOps Pipeline
 
-# Se ejecuta automáticamente cuando hago push
-# a las ramas principales del proyecto.
+# El pipeline se ejecuta automáticamente
+# cuando hacemos push a las ramas principales.
 on:
   push:
     branches:
@@ -18,17 +20,17 @@ jobs:
 
   security-pipeline:
 
-    # GitHub crea una máquina Ubuntu temporal
-    # donde se ejecutan todas las herramientas.
+    # GitHub levanta una máquina Ubuntu temporal
+    # donde se ejecutan todos los pasos.
     runs-on: ubuntu-latest
 
     steps:
 
-      # Descarga el repositorio.
+      # Descarga el contenido actual del repositorio.
       - name: Clonar repositorio
         uses: actions/checkout@v4
 
-      # Instalación de Node.js.
+      # Instalación del entorno Node.js.
       - name: Instalar Node.js
         uses: actions/setup-node@v4
         with:
@@ -38,18 +40,18 @@ jobs:
       - name: Instalar dependencias
         run: npm install
 
-      # ESLint permite detectar problemas básicos
-      # relacionados con seguridad.
-      # El pipeline continúa aunque aparezcan warnings.
+      # ESLint ayuda a detectar errores
+      # y patrones inseguros básicos.
+      # Aunque encuentre warnings,
+      # el pipeline continúa.
       - name: Ejecutar ESLint Security
         run: |
           npm install eslint eslint-plugin-security --save-dev
           npx eslint . || true
 
-      # Semgrep realiza análisis SAST buscando
-      # patrones inseguros directamente en el código.
-      # Como euVWA es vulnerable intencionadamente,
-      # permitimos continuar aunque encuentre fallos.
+      # Semgrep realiza análisis SAST
+      # buscando vulnerabilidades comunes
+      # directamente en el código fuente.
       - name: Ejecutar Semgrep
         uses: returntocorp/semgrep-action@v1
         continue-on-error: true
@@ -61,7 +63,7 @@ jobs:
         run: docker build -t euvwa .
 
       # Escaneo de vulnerabilidades sobre
-      # dependencias y archivos del proyecto.
+      # archivos y dependencias del proyecto.
       - name: Escaneo Trivy Filesystem
         uses: aquasecurity/trivy-action@master
         with:
@@ -87,7 +89,7 @@ jobs:
           # Arranque del contenedor vulnerable.
           docker run -d -p 3000:3000 --name euvwa-container euvwa
 
-          # Espera corta para el arranque de Express.
+          # Espera corta para el arranque.
           sleep 5
 
           echo "=== Logs del contenedor ==="
@@ -100,30 +102,29 @@ jobs:
 
           docker ps -a
 
-          # Espera adicional antes del análisis DAST.
+          # Espera adicional antes del DAST.
           sleep 15
 
-      # Verificar que la app responde antes de lanzar ZAP.
-      - # Comprobación básica de conectividad.
-# Aunque falle, el pipeline continúa para
-# poder revisar logs y resultados posteriores.
+      # Comprobación básica de conectividad.
+      # Aunque falle, el pipeline continúa
+      # para poder revisar logs posteriores.
       - name: Verificar que la app está activa
         continue-on-error: true
         run: |
           curl -v http://localhost:3000
 
-      # Obtener la IP del runner para que ZAP
-      # pueda alcanzar correctamente la aplicación.
+      # Obtener la IP del runner para que
+      # OWASP ZAP pueda alcanzar la aplicación.
       - name: Obtener IP del runner
         id: get-ip
         run: echo "runner_ip=$(hostname -I | awk '{print $1}')" >> $GITHUB_OUTPUT
 
       # Dar permisos al workspace para que
-      # OWASP ZAP pueda generar reportes.
+      # ZAP pueda generar reportes.
       - name: Ajustar permisos para ZAP
         run: chmod a+w ${{ github.workspace }}
 
-      # Escaneo DAST básico utilizando OWASP ZAP.
+      # Escaneo DAST básico usando OWASP ZAP.
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.12.0
         continue-on-error: true
