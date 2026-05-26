@@ -1,5 +1,8 @@
 // app.js Seguro - archivo principal donde se levanta el servidor
 const express = require('express');
+const jwt = require('jsonwebtoken');
+const SECRET_KEY = process.env.SECRET_KEY;
+require('dotenv').config();
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 const multer = require('multer');  
@@ -207,24 +210,38 @@ app.post('/subir', (req, res) => {
     });
 });
 // LOGIN no VULNERABLE ya protegido: sin SQL Injection y con sesión segura
+// LOGIN seguro usando JWT (sustituye el sistema antiguo de cookies)
 app.post('/login', (req, res) => {
+
+    // Cogemos lo que mete el usuario en el formulario
     const { username, password } = req.body;
 
-    // Comprobación simple (simulación)
+    console.log("Intento de login:", username);
+
+    // Comprobación básica (simulada)
+    // En un sistema real esto vendría de base de datos + contraseña hasheada
     if (username === "admin" && password === "1234") {
 
-        // Generamos un token random que no se puede adivinar
-        const tokenSeguro = crypto.randomBytes(32).toString('hex');
+        // Aquí generamos el token JWT
+        // Básicamente es una "llave" que representa la sesión del usuario
+        const token = jwt.sign(
+            { user: username },   // lo que guardamos dentro del token
+            SECRET_KEY,           // clave secreta para firmarlo
+            { expiresIn: "1h" }   // caduca en 1 hora
+        );
 
-        // Cookie con protección básica
-       res.cookie('sesion_activa', tokenSeguro, { 
-    httpOnly: true,
-    sameSite: 'strict',
-    secure: false // en local
-});
-        res.send("<h1>Login correcto</h1>");
+        // Mostramos el token en pantalla para poder verlo (para la práctica)
+        res.send(`
+            <h1>Login correcto</h1>
+            <p>Token generado:</p>
+            <textarea rows="5" cols="60">${token}</textarea>
+            <br><br>
+            <p>Este token representa una sesión segura</p>
+        `);
+
     } else {
-        res.send("<h1>Credenciales incorrectas</h1>");
+        // Mensaje genérico para no dar pistas
+        res.status(401).send("<h1>Error: Credenciales incorrectas</h1>");
     }
 });
 //   7. SECURITY MISCONFIGURATION - Protegido O.K.
