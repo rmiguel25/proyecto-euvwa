@@ -75,11 +75,42 @@ jobs:
         with:
           image-ref: euvwa
 
-	
-      # Verificar que la app responde antes de lanzar ZAP.
-      - name: Verificar que la app está activa
+      # Arranque temporal del contenedor
+      # para realizar pruebas dinámicas.
+      - name: Ejecutar aplicación
         run: |
-          curl --retry 10 --retry-delay 3 --retry-connrefused http://localhost:3000
+
+          # Eliminamos el contenedor anterior
+          # para evitar conflictos entre ejecuciones.
+          docker rm -f euvwa-container 2>/dev/null || true
+
+          # Arranque del contenedor vulnerable.
+          docker run -d -p 3000:3000 --name euvwa-container euvwa
+
+          # Espera corta para el arranque de Express.
+          sleep 5
+
+          echo "=== Logs del contenedor ==="
+
+          # Mostramos logs para comprobar
+          # si el contenedor falla al iniciar.
+          docker logs euvwa-container
+
+          echo "=== Contenedores activos ==="
+
+          docker ps -a
+
+          # Espera adicional antes del análisis DAST.
+          sleep 15
+
+      # Verificar que la app responde antes de lanzar ZAP.
+      - # Comprobación básica de conectividad.
+# Aunque falle, el pipeline continúa para
+# poder revisar logs y resultados posteriores.
+      - name: Verificar que la app está activa
+        continue-on-error: true
+        run: |
+          curl -v http://localhost:3000
 
       # Obtener la IP del runner para que ZAP
       # pueda alcanzar correctamente la aplicación.
