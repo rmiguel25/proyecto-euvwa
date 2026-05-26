@@ -75,13 +75,7 @@ jobs:
         with:
           image-ref: euvwa
 
-      # Arranque temporal del contenedor
-      # para realizar pruebas dinámicas.
-      - name: Ejecutar aplicación
-        run: |
-          docker run -d -p 3000:3000 --name euvwa-container euvwa
-          sleep 20
-
+	
       # Verificar que la app responde antes de lanzar ZAP.
       - name: Verificar que la app está activa
         run: |
